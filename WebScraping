@@ -1,0 +1,30 @@
+"""
+For this project the goal is to scrape the information data box from the penn state wiki page
+and outputing the data as a csv where the header is the first value and the data is the second value
+"""
+import requests
+import csv
+from bs4 import BeautifulSoup as BS
+data = requests.get("https://en.wikipedia.org/wiki/Pennsylvania_State_University")
+get = BS(data.text,'html.parser')
+table = get.find('table', attrs = {'class': "infobox vcard"})
+ths = []
+tds = []
+for th in table.find_all('th'):
+  ths.append(th.get_text())
+ths = [i.strip('\n ') for i in ths if (i != '\n' and i != '')]
+for tr in table.find_all('tr'):
+  for td in tr.find_all('td'):
+    tds.append(str(td.get_text()))
+ths = ths[1:20]
+cleaned_tds = []
+for td in tds:
+  if '[' in td:
+    cleaned_tds.append(td[0:td.find('[')]+td[td.find(']')+1:])
+  else:
+    cleaned_tds.append(td)
+final_data = dict(zip(ths,cleaned_tds[2:21]))
+with open('output.csv','w',newline = '') as output:
+  dwriter = csv.writer(output)
+  for item in final_data:
+    dwriter.writerow([item,final_data[item]])
